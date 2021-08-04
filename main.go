@@ -1,13 +1,14 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Find next broadcast
@@ -37,8 +38,7 @@ func parseBroadcastUrl(broadcastUrl string) (fileName string) {
 }
 
 func main() {
-	osArgsLen := len(os.Args)
-	if osArgsLen < 2 {
+	if osArgsLen := len(os.Args); osArgsLen < 2 {
 		log.WithFields(log.Fields{"len(os.Args)": osArgsLen}).Fatal("No arguments provided")
 	}
 
@@ -56,7 +56,15 @@ func main() {
 	broadcastDuration := auditionStart.Sub(currentTime)
 	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
 
-	time.Sleep(broadcastDuration) // sleep for duration between current date and broadcast
+	// Sleep for duration between current date and broadcast
+	time.Sleep(broadcastDuration)
+
+	// Get audio from host
+	resp, err := http.Get(broadcastUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.WithFields(log.Fields{"currentTime": time.Now().In(loc)}).Info("Recording started")
 
 	// Create blank file
 	file, err := os.Create(fileName)
@@ -64,30 +72,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Create http client
-	client := http.Client{
-		CheckRedirect: func(r *http.Request, via []*http.Request) error {
-			r.URL.Opaque = r.URL.Path
-			return nil
-		},
-	}
-
-	// Put content on file
-	resp, err := client.Get(broadcastUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Set timer to save and disable recording
-	_ = time.AfterFunc(auditionEnd.Sub(currentTime), func() {
-		resp.Body.Close()
+	// Create timer to close file after audition end
+	_ = time.AfterFunc(auditionEnd.Sub(time.Now().In(loc)), func() {
+		defer resp.Body.Close()
+		defer log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
 		file.Close()
-
-		log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
 	})
 
 	// Write data to file
-	log.WithFields(log.Fields{"currentTime": time.Now().In(loc)}).Info("Recording started")
 	if _, err := io.Copy(file, resp.Body); err != nil {
 		log.WithFields(log.Fields{"error": err}).Warn("Connection with host closed")
 	}
