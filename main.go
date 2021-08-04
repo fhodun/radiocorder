@@ -77,6 +77,8 @@ func main() {
 		defer resp.Body.Close()
 		defer log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
 		file.Close()
+		
+		os.Exit(0)
 	})
 
 	// Write data to file
