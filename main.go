@@ -56,7 +56,7 @@ func main() {
 	broadcastDuration := auditionStart.Sub(currentTime)
 	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
 
-	time.Sleep(broadcastDuration) // sleep for duration between current date
+	time.Sleep(broadcastDuration) // sleep for duration between current date and broadcast
 
 	// Create blank file
 	file, err := os.Create(fileName)
