@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -80,22 +79,16 @@ func main() {
 	}
 
 	// Set timer to save and disable recording
-	timer := time.AfterFunc(auditionEnd.Sub(currentTime), func() {
+	_ = time.AfterFunc(auditionEnd.Sub(currentTime), func() {
 		resp.Body.Close()
 		file.Close()
 
 		log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
-
-		os.Exit(0)
 	})
 
 	// Write data to file
 	log.WithFields(log.Fields{"currentTime": time.Now().In(loc)}).Info("Recording started")
-	size, err := io.Copy(file, resp.Body)
-	if err != nil {
-		log.Fatal(err)
+	if _, err := io.Copy(file, resp.Body); err != nil {
+		log.WithFields(log.Fields{"error": err}).Warn("Connection with host closed")
 	}
-
-	// Useless but must have :(
-	fmt.Println(timer, size)
 }
