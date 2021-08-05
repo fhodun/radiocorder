@@ -3,39 +3,11 @@ package main
 import (
 	"io"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
-
-// Find next broadcast
-func findNextBroadcast(currentTime time.Time, loc *time.Location) time.Time {
-	auditionEnd := currentTime
-	for auditionEnd.Weekday() != time.Friday {
-		auditionEnd = time.Date(auditionEnd.Year(), auditionEnd.Month(), auditionEnd.Day()+1, 23, 59, 0, 0, loc)
-	}
-
-	return auditionEnd
-}
-
-// Parse broadcast url to name of broadcast file
-func parseBroadcastUrl(broadcastUrl string) (fileName string) {
-	// Build fileName from fullPath
-	fileURL, err := url.Parse(broadcastUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Parse to fileName
-	path := fileURL.Path
-	segments := strings.Split(path, "/")
-	fileName = segments[len(segments)-1] + ".ogg"
-
-	return
-}
 
 func main() {
 	if osArgsLen := len(os.Args); osArgsLen < 2 {
@@ -43,7 +15,10 @@ func main() {
 	}
 
 	broadcastUrl := string(os.Args[1])
-	fileName := parseBroadcastUrl(broadcastUrl)
+	fileName, err := ParseBroadcastUrl(broadcastUrl)
+	if err != nil {
+		log.WithFields(log.Fields{"broadcastUrl": broadcastUrl}).Fatal(err)
+	}
 
 	loc, err := time.LoadLocation("Europe/Warsaw")
 	if err != nil {
@@ -51,7 +26,7 @@ func main() {
 	}
 	currentTime := time.Now().In(loc)
 
-	auditionStart := findNextBroadcast(currentTime, loc)
+	auditionStart := FindNextBroadcast(currentTime, loc)
 	auditionEnd := time.Date(auditionStart.Year(), auditionStart.Month(), auditionStart.Day()+1, 6, 0, 0, 0, loc)
 	broadcastDuration := auditionStart.Sub(currentTime)
 	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
@@ -77,7 +52,7 @@ func main() {
 		defer resp.Body.Close()
 		defer log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
 		file.Close()
-		
+
 		os.Exit(0)
 	})
 
