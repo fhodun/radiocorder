@@ -23,7 +23,7 @@ func main() {
 	currentTime := time.Now()
 
 	auditionStart, auditionEnd := FindNextBroadcast(currentTime)
-	broadcastDuration := auditionStart.Sub(currentTime)
+	broadcastDuration := time.Until(currentTime)
 	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
 
 	// Sleep for duration between current date and broadcast
@@ -43,16 +43,21 @@ func main() {
 	}
 
 	// Create timer to close file after audition end
-	_ = time.AfterFunc(time.Until(auditionEnd), func() {
-		defer resp.Body.Close()
-		defer log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
-		file.Close()
+	time.AfterFunc(time.Until(auditionEnd), func() {
+		if err := file.Close(); err != nil {
+			log.Fatal(err)
+		}
+		log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
+
+		if err := resp.Body.Close(); err != nil {
+			log.Warn(err)
+		}
 
 		os.Exit(0)
 	})
 
 	// Write data to file
 	if _, err := io.Copy(file, resp.Body); err != nil {
-		log.WithFields(log.Fields{"error": err}).Warn("Connection with host closed")
+		log.Warn(err)
 	}
 }
