@@ -14,7 +14,7 @@ import (
 // Find next broadcast
 func findNextBroadcast(currentTime time.Time, loc *time.Location) time.Time {
 	auditionEnd := currentTime
-	for int(auditionEnd.Weekday()) != 5 {
+	for auditionEnd.Weekday() != time.Friday {
 		auditionEnd = time.Date(auditionEnd.Year(), auditionEnd.Month(), auditionEnd.Day()+1, 23, 59, 0, 0, loc)
 	}
 
