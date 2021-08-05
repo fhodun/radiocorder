@@ -23,7 +23,7 @@ func main() {
 	currentTime := time.Now()
 
 	auditionStart, auditionEnd := FindNextBroadcast(currentTime)
-	broadcastDuration := time.Until(currentTime)
+	broadcastDuration := time.Until(auditionStart)
 	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
 
 	// Sleep for duration between current date and broadcast
