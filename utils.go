@@ -7,12 +7,12 @@ import (
 )
 
 // Find next broadcast start and end date
-func FindNextBroadcast(currentTime time.Time) (time.Time, time.Time) {
-	auditionStart := currentTime
+func FindNextBroadcast(timeNow time.Time) (time.Time, time.Time) {
+	auditionStart := time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 23, 59, 0, 0, timeNow.Location())
 	for auditionStart.Weekday() != time.Friday {
-		auditionStart = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day()+1, 23, 59, 0, 0, currentTime.Location())
+		auditionStart = auditionStart.AddDate(0, 0, 1)
 	}
-	
+
 	auditionEnd := time.Date(auditionStart.Year(), auditionStart.Month(), auditionStart.Day()+1, 6, 0, 0, 0, auditionStart.Location())
 
 	return auditionStart, auditionEnd
