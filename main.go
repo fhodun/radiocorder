@@ -20,14 +20,9 @@ func main() {
 		log.WithFields(log.Fields{"broadcastUrl": broadcastUrl}).Fatal(err)
 	}
 
-	loc, err := time.LoadLocation("Europe/Warsaw")
-	if err != nil {
-		log.Fatal(err)
-	}
-	currentTime := time.Now().In(loc)
+	currentTime := time.Now()
 
-	auditionStart := FindNextBroadcast(currentTime, loc)
-	auditionEnd := time.Date(auditionStart.Year(), auditionStart.Month(), auditionStart.Day()+1, 6, 0, 0, 0, loc)
+	auditionStart, auditionEnd := FindNextBroadcast(currentTime)
 	broadcastDuration := auditionStart.Sub(currentTime)
 	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
 
@@ -39,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.WithFields(log.Fields{"currentTime": time.Now().In(loc)}).Info("Recording started")
+	log.WithFields(log.Fields{"currentTime": time.Now()}).Info("Recording started")
 
 	// Create blank file
 	file, err := os.Create(fileName)
@@ -48,7 +43,7 @@ func main() {
 	}
 
 	// Create timer to close file after audition end
-	_ = time.AfterFunc(auditionEnd.Sub(time.Now().In(loc)), func() {
+	_ = time.AfterFunc(time.Until(auditionEnd), func() {
 		defer resp.Body.Close()
 		defer log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
 		file.Close()

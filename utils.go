@@ -6,14 +6,16 @@ import (
 	"time"
 )
 
-// Find next broadcast
-func FindNextBroadcast(currentTime time.Time, loc *time.Location) time.Time {
-	auditionEnd := currentTime
-	for auditionEnd.Weekday() != time.Friday {
-		auditionEnd = time.Date(auditionEnd.Year(), auditionEnd.Month(), auditionEnd.Day()+1, 23, 59, 0, 0, loc)
+// Find next broadcast start and end date
+func FindNextBroadcast(currentTime time.Time) (time.Time, time.Time) {
+	auditionStart := currentTime
+	for auditionStart.Weekday() != time.Friday {
+		auditionStart = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day()+1, 23, 59, 0, 0, currentTime.Location())
 	}
+	
+	auditionEnd := time.Date(auditionStart.Year(), auditionStart.Month(), auditionStart.Day()+1, 6, 0, 0, 0, auditionStart.Location())
 
-	return auditionEnd
+	return auditionStart, auditionEnd
 }
 
 // Parse broadcast url to name of broadcast file
