@@ -11,13 +11,13 @@ import (
 
 func main() {
 	if osArgsLen := len(os.Args); osArgsLen < 2 {
-		log.WithFields(log.Fields{"len(os.Args)": osArgsLen}).Fatal("No arguments provided")
+		log.WithField("len(os.Args)", osArgsLen).Fatal("No arguments provided")
 	}
 
 	broadcastUrl := string(os.Args[1])
 	fileName, err := ParseBroadcastUrl(broadcastUrl)
 	if err != nil {
-		log.WithFields(log.Fields{"broadcastUrl": broadcastUrl}).Fatal(err)
+		log.WithField("broadcastUrl", broadcastUrl).Fatal(err)
 	}
 
 	currentTime := time.Now()
@@ -34,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.WithFields(log.Fields{"currentTime": time.Now()}).Info("Recording started")
+	log.WithField("currentTime", time.Now()).Info("Recording started")
 
 	// Create blank file
 	file, err := os.Create(fileName)
@@ -47,7 +47,7 @@ func main() {
 		if err := file.Close(); err != nil {
 			log.Fatal(err)
 		}
-		log.WithFields(log.Fields{"fileName": fileName}).Info("Recorded audio saved to file")
+		log.WithField("fileName", fileName).Info("Recorded audio saved to file")
 
 		if err := resp.Body.Close(); err != nil {
 			log.Warn(err)
