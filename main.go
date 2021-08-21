@@ -1,63 +1,107 @@
 package main
 
 import (
-	"io"
-	"net/http"
-	"os"
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	// flag "github.com/spf13/pflag"
+	// "github.com/spf13/viper"
 )
 
+// Record from now to until duration will pass command handler
+func recordNow(cmd *cobra.Command, args []string) {
+	if len(args) < 2 {
+		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 2)
+	}
+
+	var (
+		err error
+
+		timeNow time.Time = time.Now()
+		b       broadcast = broadcast{
+			url:   args[0],
+			start: timeNow,
+		}
+	)
+
+	b.duration, err = time.ParseDuration(args[1]) // Example: 2h13m7s
+	if err != nil {
+		log.Fatal(err)
+	}
+	b.end = timeNow.Add(b.duration)
+
+	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := b.record(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Record from now to until end time will come command handler
+func listenToBroadcast(cmd *cobra.Command, args []string) {
+	if len(args) < 3 {
+		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 3)
+	}
+
+	start, err := parseTime(args[1])
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	end, err := parseTime(args[2])
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Info(start)
+	log.Info(end)
+
+	var (
+		b broadcast = broadcast{
+			url:      args[0],
+			start:    start,
+			end:      end,
+			duration: start.Sub(end),
+		}
+	)
+
+	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Info(time.Until(start))
+	time.Sleep(time.Until(start))
+
+	if err := b.record(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
-	if osArgsLen := len(os.Args); osArgsLen < 2 {
-		log.WithField("len(os.Args)", osArgsLen).Fatal("No arguments provided")
+	cmdNow := &cobra.Command{
+		Use:     "now [host] [duration]",
+		Aliases: []string{"n"},
+		Short:   "Record broadcast from now",
+		Example: "now example.com:2137/stream 2h13m7s",
+		Run:     recordNow,
 	}
 
-	broadcastUrl := string(os.Args[1])
-	fileName, err := ParseBroadcastUrl(broadcastUrl)
-	if err != nil {
-		log.WithField("broadcastUrl", broadcastUrl).Fatal(err)
+	cmdBroadcast := &cobra.Command{
+		Use:     "broadcast [host] [start time] [end time]", // TODO: add [.../duration]
+		Aliases: []string{"b"},
+		Short:   "Record broadcast",
+		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",
+		Run:     listenToBroadcast,
 	}
 
-	currentTime := time.Now()
+	rootCmd := &cobra.Command{Use: "radiocorder"}
+	rootCmd.AddCommand(cmdNow, cmdBroadcast)
 
-	auditionStart, auditionEnd := FindNextBroadcast(currentTime)
-	broadcastDuration := time.Until(auditionStart)
-	log.WithFields(log.Fields{"date": auditionStart, "broadcastDuration": broadcastDuration}).Info("Found next broadcast date")
-
-	// Sleep for duration between current date and broadcast
-	time.Sleep(broadcastDuration)
-
-	// Get audio from host
-	resp, err := http.Get(broadcastUrl)
-	if err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
-	}
-	log.WithField("currentTime", time.Now()).Info("Recording started")
-
-	// Create blank file
-	file, err := os.Create(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Create timer to close file after audition end
-	time.AfterFunc(time.Until(auditionEnd), func() {
-		if err := file.Close(); err != nil {
-			log.Fatal(err)
-		}
-		log.WithField("fileName", fileName).Info("Recorded audio saved to file")
-
-		if err := resp.Body.Close(); err != nil {
-			log.Warn(err)
-		}
-
-		os.Exit(0)
-	})
-
-	// Write data to file
-	if _, err := io.Copy(file, resp.Body); err != nil {
-		log.Warn(err)
 	}
 }

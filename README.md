@@ -1,22 +1,31 @@
 # Radiocorder
 
-Repeatedly record Internet radio on specified time and date (audition time)
+Simply record Internet radio or any other streamed audio by url
 
 ## Usage
 
-For now broadcast date and time settings are constantly assigned in source code
+Available Commands:
+
+- `broadcast` Record broadcast
+- `help` Help about any command
+- `now` Record broadcast from now
+
+You also can use command to get information about all commands
 
 ```sh
-./radiocorder <stream url>
+./radiocorder help [optionally command name]
 ```
 
 Example:
 
 ```sh
-$ ./radiocorder <stream url>
-INFO[0000] Found next broadcast date                     broadcastDuration=0s date="2021-08-04 00:52:59.19727516 +0200 CEST"
-INFO[0000] Recording started                             currentTime="2021-08-04 00:52:59.670034944 +0200 CEST"
-INFO[0003] Recorded audio saved to file                  fileName=stream.ogg
+./radiocorder broadcast <stream url> "Fri, 23:59" "Sat, 6:00"
+```
+
+Example 2:
+
+```sh
+./radiocorder now <stream url> "2h13m7s"
 ```
 
 file with recorded audio has saved to directory where program has launched
