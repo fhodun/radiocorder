@@ -5,8 +5,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	// flag "github.com/spf13/pflag"
-	// "github.com/spf13/viper"
 )
 
 // Record from now to until duration will pass command handler

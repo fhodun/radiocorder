@@ -20,23 +20,6 @@ type broadcast struct {
 	fileNamePrefix string
 }
 
-// Find next broadcast start and end date
-/*func (b *broadcast) findNextBroadcast(timeNow time.Time) {
-	if (timeNow.Weekday() == time.Saturday) && (timeNow.Hour() < 6) {
-		b.start = timeNow
-	} else {
-		b.start = time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), 23, 59, 0, 0, timeNow.Location())
-		for b.start.Weekday() != time.Friday {
-			b.start = b.start.AddDate(0, 0, 1)
-		}
-	}
-
-	b.end = time.Date(b.start.Year(), b.start.Month(), b.start.Day(), 6, 0, 0, 0, b.start.Location())
-	if b.end.Weekday() == time.Friday {
-		b.end = b.end.AddDate(0, 0, 1)
-	}
-}*/
-
 func (b *broadcast) record() error {
 	// Get audio from host
 	resp, err := http.Get(b.url)
