@@ -1,6 +1,7 @@
 package main
 
 import (
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"os"
@@ -20,7 +21,7 @@ type broadcast struct {
 	fileNamePrefix string
 }
 
-func (b *broadcast) record() error {
+func (b broadcast) record() error {
 	// Get audio from host
 	resp, err := http.Get(b.url)
 	if err != nil {
@@ -38,15 +39,13 @@ func (b *broadcast) record() error {
 
 	// Create timer to close file after audition end
 	time.AfterFunc(time.Until(b.end), func() {
-		file.Close()
-		// if err := file.Close(); err != nil {
-		// log.Warn(err)
-		// }
+		if err := file.Close(); err != nil {
+			log.Warn(err)
+		}
 
-		resp.Body.Close()
-		// if err := resp.Body.Close(); err != nil {
-		// log.Warn(err)
-		// }
+		if err := resp.Body.Close(); err != nil {
+			log.Warn(err)
+		}
 	})
 
 	// Write data to file
