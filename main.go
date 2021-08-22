@@ -23,11 +23,15 @@ func recordNow(cmd *cobra.Command, args []string) {
 		}
 	)
 
-	b.duration, err = time.ParseDuration(args[1]) // Example: 2h13m7s
+	duration, err := time.ParseDuration(args[1])
 	if err != nil {
-		log.Fatal(err)
+		b.end, err = parseTime(args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		b.end = timeNow.Add(duration)
 	}
-	b.end = timeNow.Add(b.duration)
 
 	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
 	if err != nil {
@@ -45,7 +49,7 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 3)
 	}
 
-	start, err := parseTime(args[1])
+	/*start, err := parseTime(args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,26 +57,42 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 	end, err := parseTime(args[2])
 	if err != nil {
 		log.Fatal(err)
-	}
-	log.Info(start)
-	log.Info(end)
+	}*/
 
 	var (
-		b broadcast = broadcast{
-			url:      args[0],
-			start:    start,
-			end:      end,
-			duration: start.Sub(end),
+		timeNow time.Time = time.Now()
+		b       broadcast = broadcast{
+			url: args[0],
 		}
 	)
+
+	startDuration, err := time.ParseDuration(args[1])
+	if err != nil {
+		b.start, err = parseTime(args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		b.start = timeNow.Add(startDuration)
+	}
+
+	// TODO: repeated code
+	endDuration, err := time.ParseDuration(args[2])
+	if err != nil {
+		b.end, err = parseTime(args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		b.end = timeNow.Add(endDuration)
+	}
 
 	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Info(time.Until(start))
-	time.Sleep(time.Until(start))
+	time.Sleep(time.Until(b.start))
 
 	if err := b.record(); err != nil {
 		log.Fatal(err)
@@ -81,7 +101,7 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 
 func main() {
 	cmdNow := &cobra.Command{
-		Use:     "now [host] [duration]",
+		Use:     "now [host] [end time/duration]",
 		Aliases: []string{"n"},
 		Short:   "Record broadcast from now",
 		Example: "now example.com:2137/stream 2h13m7s",
@@ -89,7 +109,7 @@ func main() {
 	}
 
 	cmdBroadcast := &cobra.Command{
-		Use:     "broadcast [host] [start time] [end time]", // TODO: add [.../duration]
+		Use:     "broadcast [host] [start time/duration] [end time/duration]", // TODO: add [.../duration]
 		Aliases: []string{"b"},
 		Short:   "Record broadcast",
 		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",

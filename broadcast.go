@@ -15,8 +15,6 @@ type broadcast struct {
 	start time.Time
 	// End time
 	end time.Time
-	// Duration
-	duration time.Duration
 	// Saved stream file name prefix
 	fileNamePrefix string
 }
