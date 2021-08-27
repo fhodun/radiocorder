@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/cheggaaa/pb/v3"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -20,17 +21,21 @@ type broadcast struct {
 }
 
 func (b broadcast) record() error {
+	var (
+		// Create file name from prefix and start date
+		fileName string = b.fileNamePrefix + b.start.Format("2006-01-02") + ".ogg"
+		file     *os.File
+		bar      *pb.ProgressBar
+	)
+
 	// Get audio from host
 	resp, err := http.Get(b.url)
 	if err != nil {
 		return err
 	}
 
-	// Create file name from prefix and start date
-	fileName := b.fileNamePrefix + b.start.Format("2006-01-02") + ".ogg"
-
 	// Create blank file
-	file, err := os.Create(fileName)
+	file, err = os.Create(fileName)
 	if err != nil {
 		return err
 	}
@@ -46,9 +51,27 @@ func (b broadcast) record() error {
 		}
 	})
 
+	// Create progress bar from duration between actual time and broadcast end
+	bar = pb.New(int(time.Until(b.end).Seconds()))
+	bar.Start()
+
+	ticker := time.NewTicker(1 * time.Second)
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				bar.Finish()
+				return
+			case <-ticker.C:
+				bar.Increment()
+			}
+		}
+	}()
+
 	// Write data to file
 	if _, err := io.Copy(file, resp.Body); err != nil {
-		return err
+		log.Warn(err)
 	}
 
 	return nil
