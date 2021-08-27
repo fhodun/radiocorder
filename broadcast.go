@@ -61,7 +61,6 @@ func (b broadcast) record() error {
 		for {
 			select {
 			case <-done:
-				bar.Finish()
 				return
 			case <-ticker.C:
 				bar.Increment()
@@ -73,6 +72,9 @@ func (b broadcast) record() error {
 	if _, err := io.Copy(file, resp.Body); err != nil {
 		log.Warn(err)
 	}
+
+	done <- true
+	bar.Finish()
 
 	return nil
 }

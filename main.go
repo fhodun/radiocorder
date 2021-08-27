@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/cheggaaa/pb/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -49,19 +50,8 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 3)
 	}
 
-	/*start, err := parseTime(args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	end, err := parseTime(args[2])
-	if err != nil {
-		log.Fatal(err)
-	}*/
-
 	var (
-		timeNow time.Time = time.Now()
-		b       broadcast = broadcast{
+		b broadcast = broadcast{
 			url: args[0],
 		}
 	)
@@ -73,7 +63,7 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 	} else {
-		b.start = timeNow.Add(startDuration)
+		b.start = time.Now().Add(startDuration)
 	}
 
 	// TODO: repeated code
@@ -84,7 +74,7 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 	} else {
-		b.end = timeNow.Add(endDuration)
+		b.end = b.start.Add(endDuration)
 	}
 
 	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
@@ -92,8 +82,30 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
+	// Create progress bar from duration between actual time and broadcast start
+	bar := pb.New(int(time.Until(b.start).Seconds()))
+	bar.Start()
+
+	ticker := time.NewTicker(1 * time.Second)
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case <-done:
+				
+				return
+			case <-ticker.C:
+				bar.Increment()
+			}
+		}
+	}()
+
 	time.Sleep(time.Until(b.start))
 
+	done <- true
+	bar.Finish()
+	
+	log.Info("starting recording")
 	if err := b.record(); err != nil {
 		log.Fatal(err)
 	}
