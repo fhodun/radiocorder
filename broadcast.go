@@ -1,12 +1,14 @@
 package main
 
 import (
-	"github.com/cheggaaa/pb/v3"
-	log "github.com/sirupsen/logrus"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/cheggaaa/pb/v3"
+	log "github.com/sirupsen/logrus"
 )
 
 type broadcast struct {
@@ -20,33 +22,45 @@ type broadcast struct {
 	fileNamePrefix string
 }
 
-func (b broadcast) record() error {
+func (b broadcast) record() {
 	var (
 		// Create file name from prefix and start date
 		fileName string = b.fileNamePrefix + b.start.Format("2006-01-02") + ".ogg"
 		file     *os.File
 		bar      *pb.ProgressBar
+		fileInfo fs.FileInfo
+		done     chan bool = make(chan bool, 1)
 	)
+
+	log.Info("starting recording")
 
 	// Get audio from host
 	resp, err := http.Get(b.url)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	// Create blank file
 	file, err = os.Create(fileName)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	// Create timer to close file after audition end
 	time.AfterFunc(time.Until(b.end), func() {
-		if err := file.Close(); err != nil {
+		done <- true
+		bar.Finish()
+
+		fileInfo, err = file.Stat()
+		if err != nil {
 			log.Warn(err)
 		}
 
 		if err := resp.Body.Close(); err != nil {
+			log.Warn(err)
+		}
+
+		if err := file.Close(); err != nil {
 			log.Warn(err)
 		}
 	})
@@ -56,7 +70,6 @@ func (b broadcast) record() error {
 	bar.Start()
 
 	ticker := time.NewTicker(1 * time.Second)
-	done := make(chan bool)
 	go func() {
 		for {
 			select {
@@ -70,11 +83,11 @@ func (b broadcast) record() error {
 
 	// Write data to file
 	if _, err := io.Copy(file, resp.Body); err != nil {
+		defer bar.Finish()
+		done <- true
+
 		log.Warn(err)
 	}
 
-	done <- true
-	bar.Finish()
-
-	return nil
+	log.Infof("written broadcast to file with name: %s and size of %d bytes", fileInfo.Name(), fileInfo.Size())
 }

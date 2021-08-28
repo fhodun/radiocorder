@@ -39,9 +39,7 @@ func recordNow(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if err := b.record(); err != nil {
-		log.Fatal(err)
-	}
+	b.record()
 }
 
 // Record from now to until end time will come command handler
@@ -92,7 +90,6 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 		for {
 			select {
 			case <-done:
-				
 				return
 			case <-ticker.C:
 				bar.Increment()
@@ -104,11 +101,8 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 
 	done <- true
 	bar.Finish()
-	
-	log.Info("starting recording")
-	if err := b.record(); err != nil {
-		log.Fatal(err)
-	}
+
+	b.record()
 }
 
 func main() {
