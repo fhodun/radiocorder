@@ -6,7 +6,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 )
 
 // Parse broadcast url to name of broadcast file
@@ -18,7 +17,7 @@ func parseBroadcastUrl(broadcastUrl string) (string, error) {
 
 	path := fileURL.Path
 	segments := strings.Split(path, "/")
-	fileName := segments[len(segments)-1] + "_"
+	fileName := segments[len(segments)-1]
 
 	return fileName, nil
 }

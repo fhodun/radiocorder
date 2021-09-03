@@ -15,12 +15,9 @@ func recordNow(cmd *cobra.Command, args []string) {
 	}
 
 	var (
-		err error
-
-		timeNow time.Time = time.Now()
-		b       broadcast = broadcast{
+		b broadcast = broadcast{
 			url:   args[0],
-			start: timeNow,
+			start: time.Now(),
 		}
 	)
 
@@ -31,7 +28,7 @@ func recordNow(cmd *cobra.Command, args []string) {
 			log.Fatal(err)
 		}
 	} else {
-		b.end = timeNow.Add(duration)
+		b.end = b.start.Add(duration)
 	}
 
 	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
@@ -39,7 +36,7 @@ func recordNow(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	b.record()
+	record(&b)
 }
 
 // Record from now to until end time will come command handler
@@ -102,7 +99,7 @@ func listenToBroadcast(cmd *cobra.Command, args []string) {
 	done <- true
 	bar.Finish()
 
-	b.record()
+	record(&b)
 }
 
 func main() {

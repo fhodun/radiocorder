@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -22,10 +23,31 @@ type broadcast struct {
 	fileNamePrefix string
 }
 
-func (b broadcast) record() {
+func (b broadcast) createFile() (*os.File, error) {
+	name := fmt.Sprintf("%s_%s_%d-%d",
+		b.fileNamePrefix,
+		b.start.Format("2006-01-02"),
+		b.start.Hour(), b.start.Minute(),
+	)
+
+	for i := 1; func() bool {
+		_, err := os.Stat(name + ".ogg")
+		return os.IsExist(err)
+	}(); i++ {
+		log.Infof("File name \"%s\" already exists, retrying", fmt.Sprint(name, ".ogg"))
+		name = fmt.Sprintf("%s_%d", name, i)
+	}
+
+	file, err := os.Create(name + ".ogg")
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func record(b *broadcast) {
 	var (
-		// Create file name from prefix and start date
-		fileName string = b.fileNamePrefix + b.start.Format("2006-01-02") + ".ogg"
 		file     *os.File
 		bar      *pb.ProgressBar
 		fileInfo fs.FileInfo
@@ -40,8 +62,7 @@ func (b broadcast) record() {
 		log.Fatal(err)
 	}
 
-	// Create blank file
-	file, err = os.Create(fileName)
+	file, err = b.createFile()
 	if err != nil {
 		log.Fatal(err)
 	}
