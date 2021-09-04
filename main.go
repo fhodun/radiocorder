@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -8,16 +9,22 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Record from now to until duration will pass command handler
-func runNow(cmd *cobra.Command, args []string) {
-	if len(args) < 2 {
-		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 2)
+// Check provided args
+func preRunE(cmd *cobra.Command, args []string, expectedArgsLen int) error {
+	if len(args) < expectedArgsLen {
+		return fmt.Errorf("invalid number of arguments, got: %d, want: %d", len(args), expectedArgsLen)
 	}
 
+	return nil
+}
+
+// Record from now to until duration will pass command handler
+func runNow(cmd *cobra.Command, args []string) {
 	var (
 		b broadcast = broadcast{
-			url:   args[0],
-			start: time.Now(),
+			url:     args[0],
+			start:   time.Now(),
+			started: flagToBool(cmd.Flag("started").Value.String()),
 		}
 	)
 
@@ -45,10 +52,6 @@ func runNow(cmd *cobra.Command, args []string) {
 
 // Record from now to until end time will come command handler
 func runBroadcast(cmd *cobra.Command, args []string) {
-	if len(args) < 3 {
-		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 3)
-	}
-
 	var (
 		b broadcast = broadcast{
 			url: args[0],
@@ -123,7 +126,13 @@ func main() {
 		Aliases: []string{"n"},
 		Short:   "Record broadcast from now",
 		Example: "now example.com:2137/stream 2h13m7s",
-		Run:     runNow,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := preRunE(cmd, args, 2); err != nil {
+				return err
+			}
+			return nil
+		},
+		Run: runNow,
 	}
 
 	cmdBroadcast := &cobra.Command{
@@ -131,7 +140,13 @@ func main() {
 		Aliases: []string{"b"},
 		Short:   "Record next planned broadcast",
 		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",
-		Run:     runBroadcast,
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if err := preRunE(cmd, args, 2); err != nil {
+				return err
+			}
+			return nil
+		},
+		Run: runBroadcast,
 	}
 	cmdBroadcast.Flags().BoolP("started", "s", false, "record broadcast even if it started but end time is until actual")
 
@@ -141,7 +156,5 @@ func main() {
 	// TODO: retry flag
 	// rootCmd.PersistentFlags().BoolP("retry", "r", false, "retry recording after unplanned fatal until end")
 
-	if err := rootCmd.Execute(); err != nil {
-		log.Fatal(err)
-	}
+	rootCmd.Execute()
 }
