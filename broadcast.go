@@ -48,7 +48,7 @@ func (b broadcast) createFile() (*os.File, error) {
 	return file, nil
 }
 
-func record(b *broadcast) {
+func record(b *broadcast) error {
 	var (
 		file     *os.File
 		bar      *pb.ProgressBar
@@ -61,12 +61,12 @@ func record(b *broadcast) {
 	// Get audio from host
 	resp, err := http.Get(b.url)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	file, err = b.createFile()
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	// Create timer to close file after audition end
@@ -113,4 +113,6 @@ func record(b *broadcast) {
 	}
 
 	log.Infof("written broadcast to file with name: %s and size of %d bytes", fileInfo.Name(), fileInfo.Size())
+
+	return nil
 }

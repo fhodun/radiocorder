@@ -47,7 +47,20 @@ func runNow(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	record(&b)
+	err = record(&b)
+	if err != nil {
+		if flagToBool(cmd.Flag("retry").Value.String()) {
+			for i := 0; i < 3 && err != nil; i++ {
+				log.WithFields(log.Fields{
+					"retry": i,
+					"error": err,
+				}).Warn("recording returned error, retrying")
+				err = record(&b)
+			}
+		}
+
+		log.Fatal(err)
+	}
 }
 
 // Record from now to until end time will come command handler
@@ -118,7 +131,20 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 		bar.Finish()
 	}
 
-	record(&b)
+	err = record(&b)
+	if err != nil {
+		if flagToBool(cmd.Flag("retry").Value.String()) {
+			for i := 0; i < 3 && err != nil; i++ {
+				log.WithFields(log.Fields{
+					"retry": i,
+					"error": err,
+				}).Warn("recording returned error, retrying")
+				err = record(&b)
+			}
+		}
+
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -154,8 +180,7 @@ func main() {
 	rootCmd := &cobra.Command{Use: "radiocorder"}
 	rootCmd.AddCommand(cmdNow, cmdBroadcast)
 
-	// TODO: retry flag
-	// rootCmd.PersistentFlags().BoolP("retry", "r", false, "retry recording after unplanned fatal until end")
+	rootCmd.PersistentFlags().BoolP("retry", "r", false, "retry recording after unplanned fatal until end")
 
 	rootCmd.Execute()
 }
