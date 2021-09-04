@@ -9,7 +9,7 @@ import (
 )
 
 // Record from now to until duration will pass command handler
-func recordNow(cmd *cobra.Command, args []string) {
+func runNow(cmd *cobra.Command, args []string) {
 	if len(args) < 2 {
 		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 2)
 	}
@@ -40,7 +40,7 @@ func recordNow(cmd *cobra.Command, args []string) {
 }
 
 // Record from now to until end time will come command handler
-func listenToBroadcast(cmd *cobra.Command, args []string) {
+func runBroadcast(cmd *cobra.Command, args []string) {
 	if len(args) < 3 {
 		log.Fatalf("invalid number of arguments, got: %d, want: %d", len(args), 3)
 	}
@@ -108,7 +108,7 @@ func main() {
 		Aliases: []string{"n"},
 		Short:   "Record broadcast from now",
 		Example: "now example.com:2137/stream 2h13m7s",
-		Run:     recordNow,
+		Run:     runNow,
 	}
 
 	cmdBroadcast := &cobra.Command{
@@ -116,11 +116,13 @@ func main() {
 		Aliases: []string{"b"},
 		Short:   "Record broadcast",
 		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",
-		Run:     listenToBroadcast,
+		Run:     runBroadcast,
 	}
 
 	rootCmd := &cobra.Command{Use: "radiocorder"}
 	rootCmd.AddCommand(cmdNow, cmdBroadcast)
+
+					
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
