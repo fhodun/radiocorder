@@ -8,6 +8,20 @@ import (
 	"time"
 )
 
+// Parse string to bool
+func flagToBool(f string) bool {
+	var b bool
+
+	switch f {
+	case "true":
+		b = true
+	case "false":
+		b = false
+	}
+
+	return b
+}
+
 // Parse broadcast url to name of broadcast file
 func parseBroadcastUrl(broadcastUrl string) (string, error) {
 	fileURL, err := url.Parse(broadcastUrl)
@@ -22,8 +36,8 @@ func parseBroadcastUrl(broadcastUrl string) (string, error) {
 	return fileName, nil
 }
 
-// Parse weekday shortcut to time weekday type
-func parseTime(s string) (time.Time, error) {
+// Parse weekday shortcut to time
+func parseTime(s string, started bool, after time.Time) (time.Time, error) {
 	daysOfWeek := map[string]time.Weekday{
 		"mon": time.Monday,
 		"tue": time.Tuesday,
@@ -49,7 +63,25 @@ func parseTime(s string) (time.Time, error) {
 
 	timeNow := time.Now()
 
-	t := time.Date(timeNow.Year(), timeNow.Month(), timeNow.Day(), timesInt[0], timesInt[1], 0, 0, timeNow.Location())
+	t := time.Date(
+		timeNow.Year(),
+		timeNow.Month(),
+		timeNow.Day(),
+		timesInt[0],
+		timesInt[1],
+		0,
+		0,
+		timeNow.Location(),
+	)
+
+	// Add one day to valid date
+	if after.IsZero() || timeNow.Before(after) {
+		if t.Weekday() == weekTime && !started {
+			t = t.AddDate(0, 0, 1)
+		}
+	}
+
+	// Set t weekday to next day named as in args
 	for t.Weekday() != weekTime {
 		t = t.AddDate(0, 0, 1)
 	}

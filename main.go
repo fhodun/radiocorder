@@ -23,7 +23,11 @@ func runNow(cmd *cobra.Command, args []string) {
 
 	duration, err := time.ParseDuration(args[1])
 	if err != nil {
-		b.end, err = parseTime(args[1])
+		b.end, err = parseTime(
+			args[1],
+			flagToBool(cmd.Flag("started").Value.String()),
+			time.Time{},
+		)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -53,7 +57,11 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 
 	startDuration, err := time.ParseDuration(args[1])
 	if err != nil {
-		b.start, err = parseTime(args[1])
+		b.start, err = parseTime(
+			args[1],
+			flagToBool(cmd.Flag("started").Value.String()),
+			time.Time{},
+		)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -64,7 +72,11 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 	// TODO: repeated code
 	endDuration, err := time.ParseDuration(args[2])
 	if err != nil {
-		b.end, err = parseTime(args[1])
+		b.end, err = parseTime(
+			args[2],
+			flagToBool(cmd.Flag("started").Value.String()),
+			b.start,
+		)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -77,27 +89,30 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	// Create progress bar from duration between actual time and broadcast start
-	bar := pb.New(int(time.Until(b.start).Seconds()))
-	bar.Start()
+	if !flagToBool(cmd.Flag("started").Value.String()) && time.Now().Before(b.start) {
+		// Create progress bar from duration between actual time and broadcast start
+		bar := pb.New(int(time.Until(b.start).Seconds()))
+		bar.Start()
 
-	ticker := time.NewTicker(1 * time.Second)
-	done := make(chan bool)
-	go func() {
-		for {
-			select {
-			case <-done:
-				return
-			case <-ticker.C:
-				bar.Increment()
+		ticker := time.NewTicker(1 * time.Second)
+		done := make(chan bool)
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				case <-ticker.C:
+					bar.Increment()
+				}
 			}
-		}
-	}()
+		}()
 
-	time.Sleep(time.Until(b.start))
+		log.WithField("duration", time.Until(b.start)).Info("waiting for broadcast start")
+		time.Sleep(time.Until(b.start))
 
-	done <- true
-	bar.Finish()
+		done <- true
+		bar.Finish()
+	}
 
 	record(&b)
 }
@@ -112,17 +127,19 @@ func main() {
 	}
 
 	cmdBroadcast := &cobra.Command{
-		Use:     "broadcast [host] [start time/duration] [end time/duration]", // TODO: add [.../duration]
+		Use:     "broadcast [host] [start time/duration] [end time/duration]",
 		Aliases: []string{"b"},
-		Short:   "Record broadcast",
+		Short:   "Record next planned broadcast",
 		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",
 		Run:     runBroadcast,
 	}
+	cmdBroadcast.Flags().BoolP("started", "s", false, "record broadcast even if it started but end time is until actual")
 
 	rootCmd := &cobra.Command{Use: "radiocorder"}
 	rootCmd.AddCommand(cmdNow, cmdBroadcast)
 
-					
+	// TODO: retry flag
+	// rootCmd.PersistentFlags().BoolP("retry", "r", false, "retry recording after unplanned fatal until end")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatal(err)
