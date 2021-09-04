@@ -10,16 +10,11 @@ import (
 
 // Parse string to bool
 func flagToBool(f string) bool {
-	var b bool
-
-	switch f {
-	case "true":
-		b = true
-	case "false":
-		b = false
+	if f == "true" {
+		return true
+	} else {
+		return false
 	}
-
-	return b
 }
 
 // Parse broadcast url to name of broadcast file
