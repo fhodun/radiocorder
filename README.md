@@ -30,6 +30,11 @@ Example 2:
 
 file with recorded audio has saved to directory where program has launched
 
+## Pull requests
+
+Pull requests are welcome.
+If you got any questions, there is [discussions page](https://github.com/fhodun/radiocorder/discussions) enabled
+
 ## License
 
 See [LICENSE](LICENSE) file
