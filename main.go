@@ -24,7 +24,7 @@ func runNow(cmd *cobra.Command, args []string) {
 		b broadcast = broadcast{
 			url:     args[0],
 			start:   time.Now(),
-			started: flagToBool(cmd.Flag("started").Value.String()),
+			started: false,
 		}
 	)
 
@@ -32,7 +32,7 @@ func runNow(cmd *cobra.Command, args []string) {
 	if err != nil {
 		b.end, err = parseTime(
 			args[1],
-			flagToBool(cmd.Flag("started").Value.String()),
+			b.started,
 			time.Time{},
 		)
 		if err != nil {
@@ -54,7 +54,8 @@ func runNow(cmd *cobra.Command, args []string) {
 func runBroadcast(cmd *cobra.Command, args []string) {
 	var (
 		b broadcast = broadcast{
-			url: args[0],
+			url:     args[0],
+			started: flagToBool(cmd.Flag("started").Value.String()),
 		}
 	)
 
@@ -62,7 +63,7 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 	if err != nil {
 		b.start, err = parseTime(
 			args[1],
-			flagToBool(cmd.Flag("started").Value.String()),
+			b.started,
 			time.Time{},
 		)
 		if err != nil {
@@ -77,7 +78,7 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 	if err != nil {
 		b.end, err = parseTime(
 			args[2],
-			flagToBool(cmd.Flag("started").Value.String()),
+			b.started,
 			b.start,
 		)
 		if err != nil {
@@ -92,7 +93,7 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 		log.Fatal(err)
 	}
 
-	if !flagToBool(cmd.Flag("started").Value.String()) && time.Now().Before(b.start) {
+	if !b.started && time.Now().Before(b.start) {
 		// Create progress bar from duration between actual time and broadcast start
 		bar := pb.New(int(time.Until(b.start).Seconds()))
 		bar.Start()

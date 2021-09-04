@@ -21,6 +21,8 @@ type broadcast struct {
 	end time.Time
 	// Saved stream file name prefix
 	fileNamePrefix string
+	// Define is broadcast started
+	started bool
 }
 
 func (b broadcast) createFile() (*os.File, error) {
