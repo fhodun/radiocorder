@@ -58,7 +58,6 @@ func record(b *broadcast) error {
 
 	log.WithFields(log.Fields{
 		"duration": time.Until(b.end),
-		"timeNow":  time.Now(),
 	}).Info("starting recording")
 
 	// Get audio from host
