@@ -26,10 +26,10 @@ type broadcast struct {
 }
 
 func (b broadcast) createFile() (*os.File, error) {
-	name := fmt.Sprintf("%s_%s_%d-%d",
+	name := fmt.Sprintf("%s_%s_%d-%d-%d",
 		b.fileNamePrefix,
 		b.start.Format("2006-01-02"),
-		b.start.Hour(), b.start.Minute(),
+		b.start.Hour(), b.start.Minute(), b.start.Second(),
 	)
 
 	for i := 1; func() bool {
@@ -56,7 +56,10 @@ func record(b *broadcast) error {
 		done     chan bool = make(chan bool, 1)
 	)
 
-	log.Info("starting recording")
+	log.WithFields(log.Fields{
+		"duration": time.Until(b.end),
+		"timeNow":  time.Now(),
+	}).Info("starting recording")
 
 	// Get audio from host
 	resp, err := http.Get(b.url)
