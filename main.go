@@ -41,6 +41,9 @@ func runNow(cmd *cobra.Command, args []string) {
 	} else {
 		b.end = b.start.Add(duration)
 	}
+	log.WithFields(log.Fields{
+		"broadcastEnd": b.end,
+	}).Info("found broadcast end")
 
 	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
 	if err != nil {
@@ -72,6 +75,8 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 		}
 	)
 
+	log.Infof("detected time: %s", time.Now())
+
 	startDuration, err := time.ParseDuration(args[1])
 	if err != nil {
 		b.start, err = parseTime(
@@ -85,6 +90,9 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 	} else {
 		b.start = time.Now().Add(startDuration)
 	}
+	log.WithFields(log.Fields{
+		"broadcastStart": b.start,
+	}).Info("found broadcast start")
 
 	// TODO: repeated code
 	endDuration, err := time.ParseDuration(args[2])
@@ -100,6 +108,9 @@ func runBroadcast(cmd *cobra.Command, args []string) {
 	} else {
 		b.end = b.start.Add(endDuration)
 	}
+	log.WithFields(log.Fields{
+		"broadcastEnd": b.end,
+	}).Info("found broadcast end")
 
 	b.fileNamePrefix, err = parseBroadcastUrl(b.url)
 	if err != nil {

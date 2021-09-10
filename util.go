@@ -70,7 +70,7 @@ func parseTime(s string, started bool, after time.Time) (time.Time, error) {
 	)
 
 	// Add one day to valid date
-	if after.IsZero() || timeNow.Before(after) {
+	if after.IsZero() || timeNow.After(after) {
 		if t.Weekday() == weekTime && !started {
 			t = t.AddDate(0, 0, 1)
 		}
