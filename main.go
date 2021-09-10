@@ -10,7 +10,7 @@ import (
 )
 
 // Check provided args
-func preRunE(cmd *cobra.Command, args []string, expectedArgsLen int) error {
+func cmdCheckArgsE(cmd *cobra.Command, args []string, expectedArgsLen int) error {
 	if len(args) < expectedArgsLen {
 		return fmt.Errorf("invalid number of arguments, got: %d, want: %d", len(args), expectedArgsLen)
 	}
@@ -154,7 +154,7 @@ func main() {
 		Short:   "Record broadcast from now",
 		Example: "now example.com:2137/stream 2h13m7s",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := preRunE(cmd, args, 2); err != nil {
+			if err := cmdCheckArgsE(cmd, args, 2); err != nil {
 				return err
 			}
 			return nil
@@ -168,7 +168,7 @@ func main() {
 		Short:   "Record next planned broadcast",
 		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if err := preRunE(cmd, args, 2); err != nil {
+			if err := cmdCheckArgsE(cmd, args, 2); err != nil {
 				return err
 			}
 			return nil
