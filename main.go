@@ -177,7 +177,7 @@ func main() {
 		Use:     "broadcast [host] [start time/duration] [end time/duration]",
 		Aliases: []string{"b"},
 		Short:   "Record next planned broadcast",
-		Example: "broadcast example.com:2137/stream \"Fri 23:59\" \"Sat 6:00\"",
+		Example: "broadcast example.com:2137/stream \"Fri, 23:59\" \"Sat, 6:00\"",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if err := cmdCheckArgsE(cmd, args, 2); err != nil {
 				return err
